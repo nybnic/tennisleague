@@ -23,6 +23,7 @@ export default function MatchesPage() {
               onUpdate={updateMatch}
               editMatch={editMatch}
               onEditDone={() => setEditMatch(null)}
+              lastMatch={matches.length > 0 ? matches[0] : null}
             />
           </div>
         </div>

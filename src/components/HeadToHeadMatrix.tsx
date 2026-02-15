@@ -36,12 +36,15 @@ export function HeadToHeadMatrix({ players, h2h, playerIndexMap }: Props) {
                 if (!record) return <td key={q.id} className="p-2 text-center">-</td>;
                 const total = record.wins + record.losses + record.draws;
                 if (total === 0) return <td key={q.id} className="p-2 text-center text-muted-foreground">0-0</td>;
+                const gameDiff = record.gamesFor - record.gamesAgainst;
+                const gameDiffStr = gameDiff > 0 ? `+${gameDiff}` : String(gameDiff);
                 return (
                   <td key={q.id} className="p-2 text-center tabular-nums">
                     <span className={record.wins > record.losses ? 'font-bold text-primary' : record.wins < record.losses ? 'text-muted-foreground' : ''}>
                       {record.wins}-{record.losses}
                       {record.draws > 0 && <span className="text-muted-foreground">-{record.draws}</span>}
                     </span>
+                    <span className="text-muted-foreground text-[10px] ml-0.5">({gameDiffStr})</span>
                   </td>
                 );
               })}

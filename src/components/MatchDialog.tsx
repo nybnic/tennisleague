@@ -13,13 +13,15 @@ interface Props {
   onUpdate: (id: string, data: Partial<Omit<Match, 'id' | 'createdAt'>>) => void;
   editMatch?: Match | null;
   onEditDone?: () => void;
+  lastMatch?: Match | null;
 }
 
-export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone }: Props) {
+export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone, lastMatch }: Props) {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState('');
-  const [playerAId, setPlayerAId] = useState('');
-  const [playerBId, setPlayerBId] = useState('');
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(todayStr);
+  const [playerAId, setPlayerAId] = useState(lastMatch?.playerAId ?? '');
+  const [playerBId, setPlayerBId] = useState(lastMatch?.playerBId ?? '');
   const [gamesA, setGamesA] = useState('');
   const [gamesB, setGamesB] = useState('');
 
@@ -35,9 +37,9 @@ export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone }:
   }, [editMatch]);
 
   const reset = () => {
-    setDate('');
-    setPlayerAId('');
-    setPlayerBId('');
+    setDate(todayStr);
+    setPlayerAId(lastMatch?.playerAId ?? '');
+    setPlayerBId(lastMatch?.playerBId ?? '');
     setGamesA('');
     setGamesB('');
     onEditDone?.();
