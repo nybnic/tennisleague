@@ -33,6 +33,8 @@ export interface HeadToHeadRecord {
   wins: number;
   losses: number;
   draws: number;
+  gamesFor: number;
+  gamesAgainst: number;
 }
 
 export interface HistoryPoint {

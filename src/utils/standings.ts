@@ -74,12 +74,16 @@ export function calculateHeadToHead(
   players.forEach(p => {
     h2h[p.id] = {};
     players.forEach(q => {
-      if (p.id !== q.id) h2h[p.id][q.id] = { wins: 0, losses: 0, draws: 0 };
+      if (p.id !== q.id) h2h[p.id][q.id] = { wins: 0, losses: 0, draws: 0, gamesFor: 0, gamesAgainst: 0 };
     });
   });
 
   for (const m of matches) {
     if (!h2h[m.playerAId]?.[m.playerBId]) continue;
+    h2h[m.playerAId][m.playerBId].gamesFor += m.gamesA;
+    h2h[m.playerAId][m.playerBId].gamesAgainst += m.gamesB;
+    h2h[m.playerBId][m.playerAId].gamesFor += m.gamesB;
+    h2h[m.playerBId][m.playerAId].gamesAgainst += m.gamesA;
     if (m.gamesA > m.gamesB) {
       h2h[m.playerAId][m.playerBId].wins++;
       h2h[m.playerBId][m.playerAId].losses++;
