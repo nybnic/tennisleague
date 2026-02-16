@@ -61,7 +61,7 @@ export function HistoryChart({ players, matches, playerIndexMap }: Props) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
             <XAxis dataKey="match" label={{ value: 'Matches Played', position: 'insideBottom', offset: -5, style: { fontSize: 11 } }} />
-            <YAxis domain={metric === 'elo' ? ['auto', 'auto'] : [0, 100]} tickFormatter={v => metric === 'elo' ? v : `${v}%`} style={{ fontSize: 11 }} />
+            <YAxis domain={['auto', 'auto']} tickFormatter={v => metric === 'elo' ? v : `${v}%`} style={{ fontSize: 11 }} />
             <Tooltip formatter={(value: number) => metric === 'elo' ? Math.round(value) : `${value.toFixed(1)}%`} />
             <Legend />
             {players.map(p => (
