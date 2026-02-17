@@ -49,12 +49,12 @@ export function StandingsTable({ standings, trends }: Props) {
                 <TableCell className="text-center tabular-nums">{s.matchesDrawn}</TableCell>
                 <TableCell className="text-center tabular-nums">{s.matchesLost}</TableCell>
                 <TableCell className="text-center tabular-nums">
-                  {s.matchesWonPct.toFixed(0)}%{t && <TrendIcon direction={t.wPctTrend} />}
+                  {s.matchesWonPct.toFixed(0)}%
                 </TableCell>
                 <TableCell className="text-center tabular-nums">{s.gamesFor}</TableCell>
                 <TableCell className="text-center tabular-nums">{s.gamesAgainst}</TableCell>
                 <TableCell className="text-center tabular-nums">
-                  {s.gamesWonPct.toFixed(0)}%{t && <TrendIcon direction={t.gPctTrend} />}
+                  {s.gamesWonPct.toFixed(0)}%
                 </TableCell>
                 <TableCell className="text-center tabular-nums font-bold">
                   {s.elo}{t && <TrendIcon direction={t.eloTrend} />}
