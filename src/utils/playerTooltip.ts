@@ -38,7 +38,7 @@ export function calculatePlayerTooltips(
     }
 
     // Per-opponent record
-    const oppStats: Record<string, { wins: number; total: number }> = {};
+    const oppStats: Record<string, { wins: number; total: number; gf: number; ga: number }> = {};
     let totalGF = 0;
     let totalGA = 0;
 
@@ -50,27 +50,32 @@ export function calculatePlayerTooltips(
       totalGF += gf;
       totalGA += ga;
 
-      if (!oppStats[oppId]) oppStats[oppId] = { wins: 0, total: 0 };
+      if (!oppStats[oppId]) oppStats[oppId] = { wins: 0, total: 0, gf: 0, ga: 0 };
       oppStats[oppId].total++;
+      oppStats[oppId].gf += gf;
+      oppStats[oppId].ga += ga;
       if (gf > ga) oppStats[oppId].wins++;
     }
 
-    // Best/worst opponent (min 1 match)
-    let bestOpp: string | null = null;
-    let bestPct = -1;
-    let worstOpp: string | null = null;
-    let worstPct = 101;
+    // Sort opponents: primary by W%, secondary by G% (games won ratio)
+    const oppEntries = Object.entries(oppStats).map(([oppId, s]) => ({
+      oppId,
+      wPct: (s.wins / s.total) * 100,
+      gPct: s.gf + s.ga > 0 ? (s.gf / (s.gf + s.ga)) * 100 : 50,
+    }));
 
-    for (const [oppId, s] of Object.entries(oppStats)) {
-      const pct = (s.wins / s.total) * 100;
-      if (pct > bestPct || (pct === bestPct && s.total > (oppStats[bestOpp!]?.total ?? 0))) {
-        bestPct = pct;
-        bestOpp = oppId;
-      }
-      if (pct < worstPct || (pct === worstPct && s.total > (oppStats[worstOpp!]?.total ?? 0))) {
-        worstPct = pct;
-        worstOpp = oppId;
-      }
+    oppEntries.sort((a, b) => b.wPct - a.wPct || b.gPct - a.gPct);
+
+    // Best = first, worst = last; ensure they differ if possible
+    let bestOpp: string | null = null;
+    let worstOpp: string | null = null;
+
+    if (oppEntries.length >= 2) {
+      bestOpp = oppEntries[0].oppId;
+      worstOpp = oppEntries[oppEntries.length - 1].oppId;
+    } else if (oppEntries.length === 1) {
+      // Only one opponent — show as best, no worst
+      bestOpp = oppEntries[0].oppId;
     }
 
     // Current streak
