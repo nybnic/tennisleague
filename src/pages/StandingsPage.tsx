@@ -3,6 +3,7 @@ import { useLeagueData } from '@/hooks/useLeagueData';
 import { calculateStandings, calculateHeadToHead } from '@/utils/standings';
 import { calculateTrends } from '@/utils/trends';
 import { generateInsights } from '@/utils/insights';
+import { calculatePlayerTooltips } from '@/utils/playerTooltip';
 import { BottomNav } from '@/components/BottomNav';
 import { StandingsTable } from '@/components/StandingsTable';
 import { HeadToHeadMatrix } from '@/components/HeadToHeadMatrix';
@@ -18,7 +19,7 @@ export default function StandingsPage() {
   const h2h = useMemo(() => calculateHeadToHead(players, rawMatches), [players, rawMatches]);
   const insights = useMemo(() => generateInsights(players, rawMatches), [players, rawMatches]);
   const trends = useMemo(() => calculateTrends(players, rawMatches), [players, rawMatches]);
-
+  const tooltips = useMemo(() => calculatePlayerTooltips(players, rawMatches), [players, rawMatches]);
   const playerIndexMap = useMemo(() => {
     const sorted = [...players].sort((a, b) => a.name.localeCompare(b.name));
     return Object.fromEntries(sorted.map((p, i) => [p.id, i]));
@@ -49,7 +50,7 @@ export default function StandingsPage() {
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${leagueOpen ? 'rotate-180' : ''}`} />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2">
-              <StandingsTable standings={standings} trends={trends} />
+              <StandingsTable standings={standings} trends={trends} tooltips={tooltips} />
             </CollapsibleContent>
           </section>
         </Collapsible>
