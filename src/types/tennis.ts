@@ -4,6 +4,14 @@ export interface Player {
   createdAt: string;
 }
 
+export type Surface = 'hard' | 'clay' | 'grass';
+
+export const SURFACE_META: Record<Surface, { label: string; emoji: string }> = {
+  hard: { label: 'Hard', emoji: '🏟️' },
+  clay: { label: 'Clay', emoji: '🟤' },
+  grass: { label: 'Grass', emoji: '🌿' },
+};
+
 export interface Match {
   id: string;
   date: string; // yyyy-mm-dd
@@ -13,6 +21,7 @@ export interface Match {
   gamesB: number;
   createdAt: string;
   seasonId?: string;
+  surface?: Surface;
 }
 
 export interface PlayerStanding {

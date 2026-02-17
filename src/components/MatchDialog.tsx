@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Match, Player } from '@/types/tennis';
+import { Match, Player, Surface, SURFACE_META } from '@/types/tennis';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus } from 'lucide-react';
 
 interface Props {
   players: Player[];
+  matches: Match[];
   onAdd: (match: Omit<Match, 'id' | 'createdAt'>) => void;
   onUpdate: (id: string, data: Partial<Omit<Match, 'id' | 'createdAt'>>) => void;
   editMatch?: Match | null;
@@ -16,7 +19,15 @@ interface Props {
   lastMatch?: Match | null;
 }
 
-export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone, lastMatch }: Props) {
+function findLastSurfaceForPair(matches: Match[], a: string, b: string): Surface | undefined {
+  if (!a || !b) return undefined;
+  const sorted = [...matches]
+    .filter(m => (m.playerAId === a && m.playerBId === b) || (m.playerAId === b && m.playerBId === a))
+    .sort((x, y) => y.date.localeCompare(x.date) || y.createdAt.localeCompare(x.createdAt));
+  return sorted[0]?.surface;
+}
+
+export function MatchDialog({ players, matches, onAdd, onUpdate, editMatch, onEditDone, lastMatch }: Props) {
   const [open, setOpen] = useState(false);
   const todayStr = new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState(todayStr);
@@ -24,6 +35,15 @@ export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone, l
   const [playerBId, setPlayerBId] = useState(lastMatch?.playerBId ?? '');
   const [gamesA, setGamesA] = useState('');
   const [gamesB, setGamesB] = useState('');
+  const [surface, setSurface] = useState<Surface | ''>('');
+
+  // Auto-select surface when player pair changes
+  useEffect(() => {
+    if (!editMatch && playerAId && playerBId) {
+      const last = findLastSurfaceForPair(matches, playerAId, playerBId);
+      if (last) setSurface(last);
+    }
+  }, [playerAId, playerBId, matches, editMatch]);
 
   useEffect(() => {
     if (editMatch) {
@@ -32,6 +52,7 @@ export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone, l
       setPlayerBId(editMatch.playerBId);
       setGamesA(String(editMatch.gamesA));
       setGamesB(String(editMatch.gamesB));
+      setSurface(editMatch.surface || '');
       setOpen(true);
     }
   }, [editMatch]);
@@ -42,6 +63,7 @@ export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone, l
     setPlayerBId(lastMatch?.playerBId ?? '');
     setGamesA('');
     setGamesB('');
+    setSurface('');
     onEditDone?.();
   };
 
@@ -51,10 +73,19 @@ export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone, l
     const gb = parseInt(gamesB);
     if (isNaN(ga) || isNaN(gb) || ga < 0 || gb < 0) return;
 
+    const matchData = {
+      date,
+      playerAId,
+      playerBId,
+      gamesA: ga,
+      gamesB: gb,
+      ...(surface ? { surface: surface as Surface } : {}),
+    };
+
     if (editMatch) {
-      onUpdate(editMatch.id, { date, playerAId, playerBId, gamesA: ga, gamesB: gb });
+      onUpdate(editMatch.id, matchData);
     } else {
-      onAdd({ date, playerAId, playerBId, gamesA: ga, gamesB: gb });
+      onAdd(matchData);
     }
     reset();
     setOpen(false);
@@ -103,6 +134,35 @@ export function MatchDialog({ players, onAdd, onUpdate, editMatch, onEditDone, l
               </Select>
             </div>
           </div>
+
+          {/* Surface selector */}
+          <div>
+            <Label>Surface</Label>
+            <TooltipProvider delayDuration={200}>
+              <ToggleGroup
+                type="single"
+                value={surface}
+                onValueChange={(v) => setSurface(v as Surface | '')}
+                className="justify-start mt-1"
+              >
+                {(Object.keys(SURFACE_META) as Surface[]).map(s => (
+                  <Tooltip key={s}>
+                    <TooltipTrigger asChild>
+                      <ToggleGroupItem
+                        value={s}
+                        aria-label={SURFACE_META[s].label}
+                        className="px-3 py-2 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                      >
+                        {SURFACE_META[s].emoji} {SURFACE_META[s].label}
+                      </ToggleGroupItem>
+                    </TooltipTrigger>
+                    <TooltipContent>{SURFACE_META[s].label} court</TooltipContent>
+                  </Tooltip>
+                ))}
+              </ToggleGroup>
+            </TooltipProvider>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="games-a">Games A</Label>
