@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Surface, SURFACE_META } from '@/types/tennis';
 import { useLeagueData } from '@/hooks/useLeagueData';
 import { calculateStandings, calculateHeadToHead } from '@/utils/standings';
@@ -28,12 +28,36 @@ export default function StandingsPage() {
   } = useLeagueData();
 
   const [surfaceFilter, setSurfaceFilter] = useState<Surface | 'all'>('all');
+  const [selectedSeasons, setSelectedSeasons] = useState<Set<string>>(() => {
+    // Initialize with current season
+    return currentSeasonId ? new Set([currentSeasonId]) : new Set();
+  });
 
-  // Filter matches by surface
+  // Update selected seasons when currentSeasonId changes
+  useEffect(() => {
+    if (currentSeasonId && selectedSeasons.size === 0) {
+      setSelectedSeasons(new Set([currentSeasonId]));
+    }
+  }, [currentSeasonId]);
+
+  const toggleSeason = (seasonId: string) => {
+    const newSet = new Set(selectedSeasons);
+    if (newSet.has(seasonId)) {
+      newSet.delete(seasonId);
+    } else {
+      newSet.add(seasonId);
+    }
+    setSelectedSeasons(newSet);
+  };
+
+  // Filter matches by selected seasons and surface
   const filteredMatches = useMemo(() => {
-    if (surfaceFilter === 'all') return rawMatches;
-    return rawMatches.filter(m => m.surface === surfaceFilter);
-  }, [rawMatches, surfaceFilter]);
+    let filtered = rawMatches.filter(m => selectedSeasons.has(m.seasonId));
+    if (surfaceFilter !== 'all') {
+      filtered = filtered.filter(m => m.surface === surfaceFilter);
+    }
+    return filtered;
+  }, [rawMatches, selectedSeasons, surfaceFilter]);
 
   const standings = useMemo(() => calculateStandings(players, filteredMatches), [players, filteredMatches]);
   const h2h = useMemo(() => calculateHeadToHead(players, filteredMatches), [players, filteredMatches]);
@@ -66,34 +90,58 @@ export default function StandingsPage() {
               onCreateSeason={createSeason}
             />
           </div>
-          <div className="flex gap-2 items-center">
-            <span className="text-xs text-muted-foreground font-medium">Court:</span>
-            <Button
-              variant={surfaceFilter === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSurfaceFilter('all')}
-              className="h-7 text-xs"
-            >
-              All
-            </Button>
-            {(Object.keys(SURFACE_META) as Surface[]).map(surface => (
+          <div className="space-y-2">
+            <div className="flex gap-2 items-center flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium">Seasons:</span>
               <Button
-                key={surface}
-                variant={surfaceFilter === surface ? 'default' : 'outline'}
+                variant={selectedSeasons.size === seasons.length ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSurfaceFilter(surface)}
+                onClick={() => setSelectedSeasons(new Set(seasons.map(s => s.id)))}
                 className="h-7 text-xs"
               >
-                {SURFACE_META[surface].emoji} {SURFACE_META[surface].label}
+                All
               </Button>
-            ))}
+              {seasons.map(season => (
+                <Button
+                  key={season.id}
+                  variant={selectedSeasons.has(season.id) ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => toggleSeason(season.id)}
+                  className="h-7 text-xs"
+                >
+                  {season.name}
+                </Button>
+              ))}
+            </div>
+            <div className="flex gap-2 items-center flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium">Court:</span>
+              <Button
+                variant={surfaceFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSurfaceFilter('all')}
+                className="h-7 text-xs"
+              >
+                All
+              </Button>
+              {(Object.keys(SURFACE_META) as Surface[]).map(surface => (
+                <Button
+                  key={surface}
+                  variant={surfaceFilter === surface ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSurfaceFilter(surface)}
+                  className="h-7 text-xs"
+                >
+                  {SURFACE_META[surface].emoji} {SURFACE_META[surface].label}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </header>
       <main className="container py-4 space-y-6">
         {loading ? (
           <div className="text-center py-8 text-muted-foreground">Loading standings...</div>
-        ) : !currentSeasonId ? (
+        ) : !currentSeasonId || selectedSeasons.size === 0 ? (
           <div className="text-center py-8 text-muted-foreground">Select a season to view standings</div>
         ) : (
           <>
