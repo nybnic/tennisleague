@@ -4,6 +4,13 @@ export interface Player {
   createdAt: string;
 }
 
+export interface Season {
+  id: string;
+  name: string;
+  passcode: string;
+  createdAt: string;
+}
+
 export type Surface = 'hard' | 'clay' | 'grass';
 
 export const SURFACE_META: Record<Surface, { label: string; emoji: string }> = {
@@ -20,7 +27,7 @@ export interface Match {
   gamesA: number;
   gamesB: number;
   createdAt: string;
-  seasonId?: string;
+  seasonId: string;
   surface?: Surface;
 }
 

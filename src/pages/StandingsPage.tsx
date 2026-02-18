@@ -1,25 +1,45 @@
 import { useMemo, useState } from 'react';
+import { Surface, SURFACE_META } from '@/types/tennis';
 import { useLeagueData } from '@/hooks/useLeagueData';
 import { calculateStandings, calculateHeadToHead } from '@/utils/standings';
 import { calculateTrends } from '@/utils/trends';
 import { generateInsights } from '@/utils/insights';
 import { calculatePlayerTooltips } from '@/utils/playerTooltip';
 import { BottomNav } from '@/components/BottomNav';
+import { SeasonSelector } from '@/components/SeasonSelector';
 import { StandingsTable } from '@/components/StandingsTable';
 import { HeadToHeadMatrix } from '@/components/HeadToHeadMatrix';
 import { HistoryChart } from '@/components/HistoryChart';
 import { InsightsBar } from '@/components/InsightsBar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
 import { ChevronDown } from 'lucide-react';
 
 export default function StandingsPage() {
-  const { players, matches, rawMatches, loading } = useLeagueData();
+  const {
+    players,
+    matches,
+    rawMatches,
+    seasons,
+    currentSeasonId,
+    loading,
+    switchSeason,
+    createSeason,
+  } = useLeagueData();
 
-  const standings = useMemo(() => calculateStandings(players, rawMatches), [players, rawMatches]);
-  const h2h = useMemo(() => calculateHeadToHead(players, rawMatches), [players, rawMatches]);
-  const insights = useMemo(() => generateInsights(players, rawMatches), [players, rawMatches]);
-  const trends = useMemo(() => calculateTrends(players, rawMatches), [players, rawMatches]);
-  const tooltips = useMemo(() => calculatePlayerTooltips(players, rawMatches), [players, rawMatches]);
+  const [surfaceFilter, setSurfaceFilter] = useState<Surface | 'all'>('all');
+
+  // Filter matches by surface
+  const filteredMatches = useMemo(() => {
+    if (surfaceFilter === 'all') return rawMatches;
+    return rawMatches.filter(m => m.surface === surfaceFilter);
+  }, [rawMatches, surfaceFilter]);
+
+  const standings = useMemo(() => calculateStandings(players, filteredMatches), [players, filteredMatches]);
+  const h2h = useMemo(() => calculateHeadToHead(players, filteredMatches), [players, filteredMatches]);
+  const insights = useMemo(() => generateInsights(players, filteredMatches), [players, filteredMatches]);
+  const trends = useMemo(() => calculateTrends(players, filteredMatches), [players, filteredMatches]);
+  const tooltips = useMemo(() => calculatePlayerTooltips(players, filteredMatches), [players, filteredMatches]);
   const playerIndexMap = useMemo(() => {
     const sorted = [...players].sort((a, b) => a.name.localeCompare(b.name));
     return Object.fromEntries(sorted.map((p, i) => [p.id, i]));
@@ -36,13 +56,45 @@ export default function StandingsPage() {
   return (
     <div className="min-h-screen pb-20 bg-background">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="container py-3">
-          <h1 className="text-xl font-display font-bold tracking-tight">🏆 Standings</h1>
+        <div className="container space-y-3 py-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-display font-bold tracking-tight">🏆 Standings</h1>
+            <SeasonSelector
+              seasons={seasons}
+              currentSeasonId={currentSeasonId}
+              onSeasonChange={switchSeason}
+              onCreateSeason={createSeason}
+            />
+          </div>
+          <div className="flex gap-2 items-center">
+            <span className="text-xs text-muted-foreground font-medium">Court:</span>
+            <Button
+              variant={surfaceFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSurfaceFilter('all')}
+              className="h-7 text-xs"
+            >
+              All
+            </Button>
+            {(Object.keys(SURFACE_META) as Surface[]).map(surface => (
+              <Button
+                key={surface}
+                variant={surfaceFilter === surface ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSurfaceFilter(surface)}
+                className="h-7 text-xs"
+              >
+                {SURFACE_META[surface].emoji} {SURFACE_META[surface].label}
+              </Button>
+            ))}
+          </div>
         </div>
       </header>
       <main className="container py-4 space-y-6">
         {loading ? (
           <div className="text-center py-8 text-muted-foreground">Loading standings...</div>
+        ) : !currentSeasonId ? (
+          <div className="text-center py-8 text-muted-foreground">Select a season to view standings</div>
         ) : (
           <>
             <InsightsBar insights={insights} playerIndexMap={playerIndexMap} playerNameToId={playerNameToId} />
@@ -81,7 +133,7 @@ export default function StandingsPage() {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2">
                   <div className="rounded-lg border border-border bg-card p-4">
-                    <HistoryChart players={players} matches={rawMatches} playerIndexMap={playerIndexMap} />
+                    <HistoryChart players={players} matches={filteredMatches} playerIndexMap={playerIndexMap} />
                   </div>
                 </CollapsibleContent>
               </section>
