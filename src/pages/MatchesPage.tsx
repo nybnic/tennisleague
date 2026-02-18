@@ -8,7 +8,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { calculateEloDeltas } from '@/utils/eloDelta';
 
 export default function MatchesPage() {
-  const { players, matches, rawMatches, addPlayer, updatePlayer, deletePlayer, addMatch, updateMatch, deleteMatch } = useLeagueData();
+  const { players, matches, rawMatches, addPlayer, updatePlayer, deletePlayer, addMatch, updateMatch, deleteMatch, loading } = useLeagueData();
   const [editMatch, setEditMatch] = useState<Match | null>(null);
 
   const eloDeltas = useMemo(() => calculateEloDeltas(players, rawMatches), [players, rawMatches]);
@@ -33,7 +33,11 @@ export default function MatchesPage() {
         </div>
       </header>
       <main className="container py-4">
-        <MatchList matches={matches} players={players} onEdit={setEditMatch} onDelete={deleteMatch} eloDeltas={eloDeltas} />
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Loading matches...</div>
+        ) : (
+          <MatchList matches={matches} players={players} onEdit={setEditMatch} onDelete={deleteMatch} eloDeltas={eloDeltas} />
+        )}
       </main>
       <BottomNav />
     </div>
