@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { PlayerStanding } from '@/types/tennis';
 import { PlayerTrend } from '@/utils/trends';
 import { PlayerTooltipData } from '@/utils/playerTooltip';
@@ -18,12 +19,14 @@ function TrendIcon({ direction }: { direction: 'up' | 'down' | 'neutral' }) {
 }
 
 export function StandingsTable({ standings, trends, tooltips }: Props) {
+  const [openPlayer, setOpenPlayer] = useState<string | null>(null);
+
   if (standings.length === 0) {
     return <p className="text-center text-muted-foreground py-8">No standings data yet</p>;
   }
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <TooltipProvider delayDuration={0}>
       <div className="overflow-x-auto rounded-lg border border-border">
         <Table>
           <TableHeader>
@@ -45,16 +48,20 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
             {standings.map((s, i) => {
               const t = trends?.[s.playerId];
               const tip = tooltips?.[s.playerId];
+              const isOpen = openPlayer === s.playerId;
               return (
                 <TableRow key={s.playerId} className={i === 0 && s.matches > 0 ? 'bg-primary/5' : ''}>
                   <TableCell className="font-bold text-muted-foreground">{i + 1}</TableCell>
                   <TableCell className="font-medium">
                     {tip && s.matches > 0 ? (
-                      <Tooltip>
+                      <Tooltip open={isOpen} onOpenChange={(open) => setOpenPlayer(open ? s.playerId : null)}>
                         <TooltipTrigger asChild>
-                          <span className="cursor-default underline decoration-dotted underline-offset-2 decoration-muted-foreground/40">
+                          <button
+                            onClick={() => setOpenPlayer(isOpen ? null : s.playerId)}
+                            className="cursor-pointer underline decoration-dotted underline-offset-2 decoration-muted-foreground/40 hover:text-foreground/80 text-left"
+                          >
                             {s.playerName}
-                          </span>
+                          </button>
                         </TooltipTrigger>
                         <TooltipContent side="right" className="max-w-[220px] text-xs space-y-1 p-3">
                           {tip.bestOpponent && (
