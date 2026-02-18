@@ -72,14 +72,17 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-64 text-xs space-y-2 p-3">
-                        {tip.bestOpponent && (
-                          <p><span className="text-muted-foreground">Best vs:</span> {tip.bestOpponent}</p>
-                        )}
-                        {tip.worstOpponent && (
-                          <p><span className="text-muted-foreground">Worst vs:</span> {tip.worstOpponent}</p>
-                        )}
-                        <p><span className="text-muted-foreground">Avg score:</span> {tip.avgGamesFor}–{tip.avgGamesAgainst}</p>
-                        <p><span className="text-muted-foreground">Streak:</span> {tip.currentStreak}</p>
+                        <p className="font-bold text-sm">{s.playerName}</p>
+                        <div className="border-t border-border pt-2">
+                          {tip.bestOpponent && (
+                            <p><span className="text-muted-foreground">Best vs:</span> {tip.bestOpponent}</p>
+                          )}
+                          {tip.worstOpponent && (
+                            <p><span className="text-muted-foreground">Worst vs:</span> {tip.worstOpponent}</p>
+                          )}
+                          <p><span className="text-muted-foreground">Avg score:</span> {tip.avgGamesFor}–{tip.avgGamesAgainst}</p>
+                          <p><span className="text-muted-foreground">Streak:</span> {tip.currentStreak}</p>
+                        </div>
                       </PopoverContent>
                     </Popover>
                   ) : (

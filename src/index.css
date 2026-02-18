@@ -108,7 +108,7 @@
 
 @layer components {
   .insight-card {
-    @apply bg-card rounded-xl p-4 border border-border shadow-sm;
+    @apply bg-card rounded-lg p-2 md:p-3 border border-border shadow-sm;
   }
 
   .stat-highlight {

@@ -80,10 +80,10 @@ export default function StandingsPage() {
   return (
     <div className="min-h-screen pb-20 bg-background">
       <LeagueHeader currentSeasonName={currentSeasonId ? seasons.find(s => s.id === currentSeasonId)?.name : undefined} />
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border">
+      <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="container space-y-3 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-display font-bold tracking-tight">🏆 Standings</h1>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h1 className="text-xl font-display font-bold tracking-tight hidden md:block">🏆 Standings</h1>
             <SeasonSelector
               seasons={seasons}
               currentSeasonId={currentSeasonId}
@@ -93,13 +93,13 @@ export default function StandingsPage() {
             />
           </div>
           <div className="space-y-2">
-            <div className="flex gap-2 items-center flex-wrap">
-              <span className="text-xs text-muted-foreground font-medium">Seasons:</span>
+            <div className="flex gap-1 items-center flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Seasons:</span>
               <Button
                 variant={selectedSeasons.size === seasons.length ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedSeasons(new Set(seasons.map(s => s.id)))}
-                className="h-7 text-xs"
+                className="h-7 text-xs whitespace-nowrap"
               >
                 All
               </Button>
@@ -109,19 +109,19 @@ export default function StandingsPage() {
                   variant={selectedSeasons.has(season.id) ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => toggleSeason(season.id)}
-                  className="h-7 text-xs"
+                  className="h-7 text-xs whitespace-nowrap"
                 >
                   {season.name}
                 </Button>
               ))}
             </div>
-            <div className="flex gap-2 items-center flex-wrap">
-              <span className="text-xs text-muted-foreground font-medium">Court:</span>
+            <div className="flex gap-1 items-center flex-wrap">
+              <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Court:</span>
               <Button
                 variant={surfaceFilter === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSurfaceFilter('all')}
-                className="h-7 text-xs"
+                className="h-7 text-xs whitespace-nowrap"
               >
                 All
               </Button>
@@ -131,7 +131,7 @@ export default function StandingsPage() {
                   variant={surfaceFilter === surface ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSurfaceFilter(surface)}
-                  className="h-7 text-xs"
+                  className="h-7 text-xs whitespace-nowrap"
                 >
                   {SURFACE_META[surface].emoji} {SURFACE_META[surface].label}
                 </Button>

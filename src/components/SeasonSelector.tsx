@@ -64,7 +64,7 @@ export function SeasonSelector({
   return (
     <div className="flex items-center gap-2">
       <Select value={currentSeasonId || ''} onValueChange={onSeasonChange}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-32 md:w-48">
           <SelectValue placeholder="Select a season" />
         </SelectTrigger>
         <SelectContent>

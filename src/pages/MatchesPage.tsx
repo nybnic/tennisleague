@@ -38,10 +38,10 @@ export default function MatchesPage() {
   return (
     <div className="min-h-screen pb-20 bg-background">
       <LeagueHeader currentSeasonName={currentSeason?.name} />
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border">
+      <header className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="container space-y-3 py-3">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-display font-bold tracking-tight">🎾 Matches</h1>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h1 className="text-xl font-display font-bold tracking-tight hidden md:block">🎾 Matches</h1>
             <SeasonSelector
               seasons={seasons}
               currentSeasonId={currentSeasonId}
