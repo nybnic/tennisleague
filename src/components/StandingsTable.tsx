@@ -31,7 +31,7 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
         <TableHeader>
           <TableRow className="bg-muted/50 sticky top-0">
             <TableHead className="font-display sticky left-0 z-20 bg-muted/50 p-2 md:p-3 min-w-[35px] text-center">#</TableHead>
-            <TableHead className="font-display sticky left-[51px] md:left-[59px] z-20 bg-muted/50 p-2 md:p-3 min-w-[100px] text-left">Player</TableHead>
+            <TableHead className="font-display sticky left-[35px] md:left-[35px] z-20 bg-muted/50 p-2 md:p-3 min-w-[100px] text-left">Player</TableHead>
             <TableHead className="font-display text-center p-2 md:p-3 min-w-[45px]"><span className="hidden sm:inline">Matches</span><span className="sm:hidden">M</span></TableHead>
             <TableHead className="font-display text-center p-2 md:p-3 min-w-[40px]">W</TableHead>
             <TableHead className="font-display text-center p-2 md:p-3 min-w-[40px]">D</TableHead>
@@ -49,10 +49,19 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
             const tip = tooltips?.[s.playerId];
             const isOpen = openPlayer === s.playerId;
             const isFirstPlace = i === 0 && s.matches > 0;
+            const bgColor = isFirstPlace ? '#f0f4ff' : '#ffffff';
             return (
               <TableRow key={s.playerId} className={isFirstPlace ? 'bg-primary/5' : ''}>
-                <TableCell className={`font-bold text-muted-foreground sticky left-0 z-10 p-2 md:p-3 text-center text-xs md:text-sm min-w-[35px] ${isFirstPlace ? 'bg-primary/5' : 'bg-background'}`}>{i + 1}</TableCell>
-                <TableCell className={`font-medium sticky left-[51px] md:left-[59px] z-10 p-2 md:p-3 truncate text-xs md:text-sm min-w-[100px] ${isFirstPlace ? 'bg-primary/5' : 'bg-background'}`}>
+                <TableCell 
+                  className="font-bold text-muted-foreground sticky left-0 z-20 p-2 md:p-3 text-center text-xs md:text-sm min-w-[35px]" 
+                  style={{ backgroundColor: bgColor }}
+                >
+                  {i + 1}
+                </TableCell>
+                <TableCell 
+                  className="font-medium sticky left-[35px] md:left-[35px] z-20 p-2 md:p-3 truncate text-xs md:text-sm min-w-[100px]" 
+                  style={{ backgroundColor: bgColor }}
+                >
                   {tip && s.matches > 0 ? (
                     <Popover open={isOpen} onOpenChange={(open) => setOpenPlayer(open ? s.playerId : null)}>
                       <PopoverTrigger asChild>
