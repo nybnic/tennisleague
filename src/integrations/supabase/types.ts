@@ -29,6 +29,29 @@ export type Database = {
           created_at?: string
         }
       }
+      seasons: {
+        Row: {
+          id: string
+          name: string
+          league_id: string | null
+          passcode: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          league_id?: string | null
+          passcode: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          league_id?: string | null
+          passcode?: string
+          created_at?: string
+        }
+      }
       players: {
         Row: {
           id: string
@@ -57,6 +80,8 @@ export type Database = {
           player_b_id: string
           games_a: number
           games_b: number
+          season_id: string
+          surface: string | null
           league_id: string | null
           created_at: string
         }
@@ -67,6 +92,8 @@ export type Database = {
           player_b_id: string
           games_a: number
           games_b: number
+          season_id: string
+          surface?: string | null
           league_id?: string | null
           created_at?: string
         }
@@ -77,6 +104,8 @@ export type Database = {
           player_b_id?: string
           games_a?: number
           games_b?: number
+          season_id?: string
+          surface?: string | null
           league_id?: string | null
           created_at?: string
         }

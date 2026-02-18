@@ -12,9 +12,10 @@ interface Props {
   onEdit: (match: Match) => void;
   onDelete: (id: string) => void;
   eloDeltas: Record<string, MatchEloDelta>;
+  canEdit?: boolean;
 }
 
-export function MatchList({ matches, players, onEdit, onDelete, eloDeltas }: Props) {
+export function MatchList({ matches, players, onEdit, onDelete, eloDeltas, canEdit = true }: Props) {
   const playerName = (id: string) => players.find(p => p.id === id)?.name || '?';
 
   if (matches.length === 0) {
@@ -93,21 +94,23 @@ export function MatchList({ matches, players, onEdit, onDelete, eloDeltas }: Pro
               )}
 
               {/* Actions menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover z-50">
-                  <DropdownMenuItem onClick={() => onEdit(m)}>
-                    <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(m.id)}>
-                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {canEdit && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-popover z-50">
+                    <DropdownMenuItem onClick={() => onEdit(m)}>
+                      <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive" onClick={() => onDelete(m.id)}>
+                      <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           );
         })}
