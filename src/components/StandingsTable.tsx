@@ -30,8 +30,8 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
       <Table className="text-xs md:text-sm">
         <TableHeader>
           <TableRow className="bg-muted/50 sticky top-0">
-            <TableHead className="font-display sticky left-0 z-20 bg-muted/50 p-2 md:p-3 min-w-[40px] text-center">#</TableHead>
-            <TableHead className="font-display sticky left-[52px] md:left-[60px] z-20 bg-muted/50 p-2 md:p-3 min-w-[120px] text-left">Player</TableHead>
+            <TableHead className="font-display sticky left-0 z-20 bg-muted/50 p-2 md:p-3 min-w-[35px] text-center">#</TableHead>
+            <TableHead className="font-display sticky left-[51px] md:left-[59px] z-20 bg-muted/50 p-2 md:p-3 min-w-[100px] text-left">Player</TableHead>
             <TableHead className="font-display text-center p-2 md:p-3 min-w-[45px]"><span className="hidden sm:inline">Matches</span><span className="sm:hidden">M</span></TableHead>
             <TableHead className="font-display text-center p-2 md:p-3 min-w-[40px]">W</TableHead>
             <TableHead className="font-display text-center p-2 md:p-3 min-w-[40px]">D</TableHead>
@@ -50,8 +50,8 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
             const isOpen = openPlayer === s.playerId;
             return (
               <TableRow key={s.playerId} className={i === 0 && s.matches > 0 ? 'bg-primary/5' : ''}>
-                <TableCell className="font-bold text-muted-foreground sticky left-0 z-10 bg-inherit p-2 md:p-3 text-center text-xs md:text-sm">{i + 1}</TableCell>
-                <TableCell className="font-medium sticky left-[52px] md:left-[60px] z-10 bg-inherit p-2 md:p-3 truncate text-xs md:text-sm">
+                <TableCell className="font-bold text-muted-foreground sticky left-0 z-10 p-2 md:p-3 text-center text-xs md:text-sm min-w-[35px]" style={{ backgroundColor: i === 0 && s.matches > 0 ? 'hsl(var(--primary) / 0.05)' : 'transparent' }}>{i + 1}</TableCell>
+                <TableCell className="font-medium sticky left-[51px] md:left-[59px] z-10 p-2 md:p-3 truncate text-xs md:text-sm min-w-[100px]" style={{ backgroundColor: i === 0 && s.matches > 0 ? 'hsl(var(--primary) / 0.05)' : 'transparent' }}>
                   {tip && s.matches > 0 ? (
                     <Popover open={isOpen} onOpenChange={(open) => setOpenPlayer(open ? s.playerId : null)}>
                       <PopoverTrigger asChild>
