@@ -8,9 +8,9 @@ import { UserPlus, Pencil, Trash2 } from 'lucide-react';
 
 interface Props {
   players: Player[];
-  onAdd: (name: string) => void;
-  onUpdate: (id: string, name: string) => void;
-  onDelete: (id: string) => void;
+  onAdd: (name: string) => Promise<void>;
+  onUpdate: (id: string, name: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
 export function PlayerManager({ players, onAdd, onUpdate, onDelete }: Props) {
@@ -18,12 +18,17 @@ export function PlayerManager({ players, onAdd, onUpdate, onDelete }: Props) {
   const [name, setName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const handleSubmit = () => {
+    const handleSubmit = async () => {
     if (!name.trim()) return;
     if (editingId) {
-      onUpdate(editingId, name);
+      await onUpdate(editingId, name);
     } else {
-      onAdd(name);
+      try {
+        await onAdd(name);
+      } catch (err) {
+        // Optionally show an error to the user
+        alert("Failed to add player. Please try again.");
+      }
     }
     setName('');
     setEditingId(null);
