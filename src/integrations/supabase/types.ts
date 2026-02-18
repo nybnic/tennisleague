@@ -16,16 +16,22 @@ export type Database = {
         Row: {
           id: string
           name: string
+          passcode: string
+          created_by: string | null
           created_at: string
         }
         Insert: {
           id?: string
           name: string
+          passcode: string
+          created_by?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
+          passcode?: string
+          created_by?: string | null
           created_at?: string
         }
       }
@@ -33,22 +39,19 @@ export type Database = {
         Row: {
           id: string
           name: string
-          league_id: string | null
-          passcode: string
+          league_id: string
           created_at: string
         }
         Insert: {
           id?: string
           name: string
-          league_id?: string | null
-          passcode: string
+          league_id: string
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
-          league_id?: string | null
-          passcode?: string
+          league_id?: string
           created_at?: string
         }
       }
@@ -56,19 +59,19 @@ export type Database = {
         Row: {
           id: string
           name: string
-          league_id: string | null
+          league_id: string
           created_at: string
         }
         Insert: {
           id?: string
           name: string
-          league_id?: string | null
+          league_id: string
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
-          league_id?: string | null
+          league_id?: string
           created_at?: string
         }
       }
@@ -81,8 +84,8 @@ export type Database = {
           games_a: number
           games_b: number
           season_id: string
+          league_id: string
           surface: string | null
-          league_id: string | null
           created_at: string
         }
         Insert: {
@@ -93,8 +96,8 @@ export type Database = {
           games_a: number
           games_b: number
           season_id: string
+          league_id: string
           surface?: string | null
-          league_id?: string | null
           created_at?: string
         }
         Update: {
@@ -105,8 +108,8 @@ export type Database = {
           games_a?: number
           games_b?: number
           season_id?: string
+          league_id?: string
           surface?: string | null
-          league_id?: string | null
           created_at?: string
         }
       }

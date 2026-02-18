@@ -24,7 +24,8 @@ interface SeasonSelectorProps {
   seasons: Season[];
   currentSeasonId: string | null;
   onSeasonChange: (seasonId: string) => void;
-  onCreateSeason: (name: string, passcode: string) => Promise<void>;
+  onCreateSeason?: (name: string) => Promise<void>;
+  readOnly?: boolean;
 }
 
 export function SeasonSelector({
@@ -32,25 +33,26 @@ export function SeasonSelector({
   currentSeasonId,
   onSeasonChange,
   onCreateSeason,
+  readOnly = false,
 }: SeasonSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [seasonName, setSeasonName] = useState('');
-  const [passcode, setPasscode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleCreateSeason = async () => {
-    if (!seasonName.trim() || !passcode.trim()) {
-      setError('Season name and passcode are required');
+    if (!seasonName.trim()) {
+      setError('Season name is required');
       return;
     }
 
     try {
       setIsLoading(true);
       setError(null);
-      await onCreateSeason(seasonName.trim(), passcode.trim());
+      if (onCreateSeason) {
+        await onCreateSeason(seasonName.trim());
+      }
       setSeasonName('');
-      setPasscode('');
       setIsOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create season');
@@ -74,17 +76,18 @@ export function SeasonSelector({
         </SelectContent>
       </Select>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button size="icon" variant="outline">
-            <Plus className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
+      {!readOnly && (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button size="icon" variant="outline" title="Add new season">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Season</DialogTitle>
             <DialogDescription>
-              Add a new season with a passcode to protect modifications
+              Add a new season to organize your matches
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -98,20 +101,8 @@ export function SeasonSelector({
                 placeholder="e.g., Winter 2026"
                 value={seasonName}
                 onChange={e => setSeasonName(e.target.value)}
+                disabled={isLoading}
               />
-            </div>
-            <div>
-              <Label htmlFor="passcode">Passcode</Label>
-              <Input
-                id="passcode"
-                type="password"
-                placeholder="Enter a passcode to modify games"
-                value={passcode}
-                onChange={e => setPasscode(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                You'll need this to add or edit matches
-              </p>
             </div>
             <Button
               onClick={handleCreateSeason}
@@ -123,6 +114,7 @@ export function SeasonSelector({
           </div>
         </DialogContent>
       </Dialog>
+      )}
     </div>
   );
 }

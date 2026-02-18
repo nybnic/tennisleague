@@ -1,11 +1,12 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Surface, SURFACE_META } from '@/types/tennis';
 import { useLeagueData } from '@/hooks/useLeagueData';
+import { useLeagueContext } from '@/contexts/LeagueContext';
+import { LeagueHeader } from '@/components/LeagueHeader';
 import { calculateStandings, calculateHeadToHead } from '@/utils/standings';
 import { calculateTrends } from '@/utils/trends';
 import { generateInsights } from '@/utils/insights';
 import { calculatePlayerTooltips } from '@/utils/playerTooltip';
-import { BottomNav } from '@/components/BottomNav';
 import { SeasonSelector } from '@/components/SeasonSelector';
 import { StandingsTable } from '@/components/StandingsTable';
 import { HeadToHeadMatrix } from '@/components/HeadToHeadMatrix';
@@ -13,9 +14,11 @@ import { HistoryChart } from '@/components/HistoryChart';
 import { InsightsBar } from '@/components/InsightsBar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 import { ChevronDown } from 'lucide-react';
 
 export default function StandingsPage() {
+  const { isLeagueAuthorized } = useLeagueContext();
   const {
     players,
     matches,
@@ -29,11 +32,9 @@ export default function StandingsPage() {
 
   const [surfaceFilter, setSurfaceFilter] = useState<Surface | 'all'>('all');
   const [selectedSeasons, setSelectedSeasons] = useState<Set<string>>(() => {
-    // Initialize with current season
     return currentSeasonId ? new Set([currentSeasonId]) : new Set();
   });
 
-  // Update selected seasons when currentSeasonId changes
   useEffect(() => {
     if (currentSeasonId && selectedSeasons.size === 0) {
       setSelectedSeasons(new Set([currentSeasonId]));
@@ -50,7 +51,6 @@ export default function StandingsPage() {
     setSelectedSeasons(newSet);
   };
 
-  // Filter matches by selected seasons and surface
   const filteredMatches = useMemo(() => {
     let filtered = rawMatches.filter(m => selectedSeasons.has(m.seasonId));
     if (surfaceFilter !== 'all') {
@@ -79,6 +79,7 @@ export default function StandingsPage() {
 
   return (
     <div className="min-h-screen pb-20 bg-background">
+      <LeagueHeader currentSeasonName={currentSeasonId ? seasons.find(s => s.id === currentSeasonId)?.name : undefined} />
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-sm border-b border-border">
         <div className="container space-y-3 py-3">
           <div className="flex items-center justify-between">
@@ -88,6 +89,7 @@ export default function StandingsPage() {
               currentSeasonId={currentSeasonId}
               onSeasonChange={switchSeason}
               onCreateSeason={createSeason}
+              readOnly={false}
             />
           </div>
           <div className="space-y-2">
@@ -189,7 +191,6 @@ export default function StandingsPage() {
           </>
         )}
       </main>
-      <BottomNav />
     </div>
   );
 }

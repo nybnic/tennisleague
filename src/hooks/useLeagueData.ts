@@ -1,27 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Player, Match, Season } from '@/types/tennis';
+import { Player, Match, Season, League } from '@/types/tennis';
 import { supabase } from '@/integrations/supabase/client';
+import { useLeagueContext } from '@/contexts/LeagueContext';
 
 const CURRENT_SEASON_KEY = 'tennis-league-current-season';
-const AUTHENTICATED_SEASONS_KEY = 'tennis-league-authenticated-seasons';
 
 export function useLeagueData() {
+  const { currentLeague, isLeagueAuthorized } = useLeagueContext();
+  
   const [players, setPlayers] = useState<Player[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [currentSeasonId, setCurrentSeasonId] = useState<string | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [authenticatedSeasons, setAuthenticatedSeasons] = useState<Set<string>>(
-    () => {
-      try {
-        const stored = localStorage.getItem(AUTHENTICATED_SEASONS_KEY);
-        return new Set(stored ? JSON.parse(stored) : []);
-      } catch {
-        return new Set();
-      }
-    }
-  );
 
   // Load current season on mount
   useEffect(() => {
@@ -31,32 +23,44 @@ export function useLeagueData() {
     }
   }, []);
 
-  // Fetch initial data from Supabase
+  // Fetch initial data from Supabase for current league
   useEffect(() => {
     const fetchData = async () => {
+      if (!currentLeague) {
+        setPlayers([]);
+        setSeasons([]);
+        setMatches([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        // Fetch players
+        // Fetch players for this league
         const { data: playersData, error: playersError } = await supabase
           .from('players')
-          .select('*');
+          .select('*')
+          .eq('league_id', currentLeague.id)
+          .order('name', { ascending: true });
 
         if (playersError) throw playersError;
 
         const formattedPlayers: Player[] = (playersData || []).map(p => ({
           id: p.id,
           name: p.name,
+          leagueId: p.league_id,
           createdAt: p.created_at,
         }));
 
         setPlayers(formattedPlayers);
 
-        // Fetch seasons
+        // Fetch seasons for this league
         const { data: seasonsData, error: seasonsError } = await supabase
           .from('seasons')
           .select('*')
+          .eq('league_id', currentLeague.id)
           .order('created_at', { ascending: false });
 
         if (seasonsError) throw seasonsError;
@@ -64,7 +68,7 @@ export function useLeagueData() {
         const formattedSeasons: Season[] = (seasonsData || []).map(s => ({
           id: s.id,
           name: s.name,
-          passcode: s.passcode,
+          leagueId: s.league_id,
           createdAt: s.created_at,
         }));
 
@@ -85,12 +89,12 @@ export function useLeagueData() {
     };
 
     fetchData();
-  }, []);
+  }, [currentLeague]);
 
   // Fetch matches for current season
   useEffect(() => {
     const fetchMatches = async () => {
-      if (!currentSeasonId) {
+      if (!currentSeasonId || !currentLeague) {
         setMatches([]);
         return;
       }
@@ -100,6 +104,7 @@ export function useLeagueData() {
           .from('matches')
           .select('*')
           .eq('season_id', currentSeasonId)
+          .eq('league_id', currentLeague.id)
           .order('date', { ascending: false });
 
         if (matchesError) throw matchesError;
@@ -113,7 +118,8 @@ export function useLeagueData() {
           gamesB: m.games_b,
           createdAt: m.created_at,
           seasonId: m.season_id,
-          surface: m.surface,
+          leagueId: m.league_id,
+          surface: m.surface as any,
         }));
 
         setMatches(formattedMatches);
@@ -125,39 +131,29 @@ export function useLeagueData() {
     };
 
     fetchMatches();
-  }, [currentSeasonId]);
+  }, [currentSeasonId, currentLeague]);
 
   const switchSeason = useCallback((seasonId: string) => {
     setCurrentSeasonId(seasonId);
     localStorage.setItem(CURRENT_SEASON_KEY, seasonId);
   }, []);
 
-  const authenticateSeason = useCallback((seasonId: string, passcode: string) => {
-    const season = seasons.find(s => s.id === seasonId);
-    if (!season) {
-      throw new Error('Season not found');
+  const createSeason = useCallback(async (name: string) => {
+    if (!currentLeague) {
+      throw new Error('No league selected');
     }
-    if (season.passcode !== passcode) {
-      throw new Error('Invalid passcode');
+
+    if (!isLeagueAuthorized) {
+      throw new Error('Not authorized for this league');
     }
-    const newAuthenticatedSeasons = new Set(authenticatedSeasons);
-    newAuthenticatedSeasons.add(seasonId);
-    setAuthenticatedSeasons(newAuthenticatedSeasons);
-    localStorage.setItem(
-      AUTHENTICATED_SEASONS_KEY,
-      JSON.stringify(Array.from(newAuthenticatedSeasons))
-    );
-  }, [seasons, authenticatedSeasons]);
 
-  const isSeasonAuthenticated = useCallback((seasonId: string) => {
-    return authenticatedSeasons.has(seasonId);
-  }, [authenticatedSeasons]);
-
-  const createSeason = useCallback(async (name: string, passcode: string) => {
     try {
       const { data, error } = await supabase
         .from('seasons')
-        .insert([{ name, passcode }])
+        .insert([{
+          name,
+          league_id: currentLeague.id,
+        }])
         .select()
         .single();
 
@@ -166,7 +162,7 @@ export function useLeagueData() {
       const newSeason: Season = {
         id: data.id,
         name: data.name,
-        passcode: data.passcode,
+        leagueId: data.league_id,
         createdAt: data.created_at,
       };
 
@@ -180,13 +176,24 @@ export function useLeagueData() {
       console.error('Error creating season:', err);
       throw err;
     }
-  }, []);
+  }, [currentLeague, isLeagueAuthorized]);
 
   const addPlayer = useCallback(async (name: string) => {
+    if (!currentLeague) {
+      throw new Error('No league selected');
+    }
+
+    if (!isLeagueAuthorized) {
+      throw new Error('Not authorized for this league');
+    }
+
     try {
       const { data, error } = await supabase
         .from('players')
-        .insert([{ name: name.trim() }])
+        .insert([{
+          name: name.trim(),
+          league_id: currentLeague.id,
+        }])
         .select()
         .single();
 
@@ -195,6 +202,7 @@ export function useLeagueData() {
       const newPlayer: Player = {
         id: data.id,
         name: data.name,
+        leagueId: data.league_id,
         createdAt: data.created_at,
       };
 
@@ -206,9 +214,13 @@ export function useLeagueData() {
       console.error('Error adding player:', err);
       throw err;
     }
-  }, []);
+  }, [currentLeague, isLeagueAuthorized]);
 
   const updatePlayer = useCallback(async (id: string, name: string) => {
+    if (!isLeagueAuthorized) {
+      throw new Error('Not authorized for this league');
+    }
+
     try {
       const { error } = await supabase
         .from('players')
@@ -224,9 +236,13 @@ export function useLeagueData() {
       console.error('Error updating player:', err);
       throw err;
     }
-  }, []);
+  }, [isLeagueAuthorized]);
 
   const deletePlayer = useCallback(async (id: string) => {
+    if (!isLeagueAuthorized) {
+      throw new Error('Not authorized for this league');
+    }
+
     try {
       // Delete matches first (foreign key constraint)
       const { error: matchesError } = await supabase
@@ -252,15 +268,15 @@ export function useLeagueData() {
       console.error('Error deleting player:', err);
       throw err;
     }
-  }, []);
+  }, [isLeagueAuthorized]);
 
-  const addMatch = useCallback(async (match: Omit<Match, 'id' | 'createdAt'>) => {
-    if (!currentSeasonId) {
-      throw new Error('No season selected');
+  const addMatch = useCallback(async (match: Omit<Match, 'id' | 'createdAt' | 'leagueId'>) => {
+    if (!currentSeasonId || !currentLeague) {
+      throw new Error('No season or league selected');
     }
 
-    if (!isSeasonAuthenticated(currentSeasonId)) {
-      throw new Error('Not authenticated for this season');
+    if (!isLeagueAuthorized) {
+      throw new Error('Not authorized for this league');
     }
 
     try {
@@ -273,6 +289,7 @@ export function useLeagueData() {
           games_a: match.gamesA,
           games_b: match.gamesB,
           season_id: currentSeasonId,
+          league_id: currentLeague.id,
           surface: match.surface || null,
         }])
         .select()
@@ -289,6 +306,7 @@ export function useLeagueData() {
         gamesB: data.games_b,
         createdAt: data.created_at,
         seasonId: data.season_id,
+        leagueId: data.league_id,
         surface: data.surface,
       };
 
@@ -300,11 +318,11 @@ export function useLeagueData() {
       console.error('Error adding match:', err);
       throw err;
     }
-  }, [currentSeasonId, isSeasonAuthenticated]);
+  }, [currentSeasonId, currentLeague, isLeagueAuthorized]);
 
   const updateMatch = useCallback(async (id: string, data: Partial<Omit<Match, 'id' | 'createdAt'>>) => {
-    if (!currentSeasonId || !isSeasonAuthenticated(currentSeasonId)) {
-      throw new Error('Not authenticated for this season');
+    if (!isLeagueAuthorized) {
+      throw new Error('Not authorized for this league');
     }
 
     try {
@@ -330,11 +348,11 @@ export function useLeagueData() {
       console.error('Error updating match:', err);
       throw err;
     }
-  }, [currentSeasonId, isSeasonAuthenticated]);
+  }, [isLeagueAuthorized]);
 
   const deleteMatch = useCallback(async (id: string) => {
-    if (!currentSeasonId || !isSeasonAuthenticated(currentSeasonId)) {
-      throw new Error('Not authenticated for this season');
+    if (!isLeagueAuthorized) {
+      throw new Error('Not authorized for this league');
     }
 
     try {
@@ -352,7 +370,7 @@ export function useLeagueData() {
       console.error('Error deleting match:', err);
       throw err;
     }
-  }, [currentSeasonId, isSeasonAuthenticated]);
+  }, [isLeagueAuthorized]);
 
   const sortedMatches = [...matches].sort((a, b) => {
     const dateComp = b.date.localeCompare(a.date);
@@ -370,8 +388,6 @@ export function useLeagueData() {
     error,
     switchSeason,
     createSeason,
-    authenticateSeason,
-    isSeasonAuthenticated,
     addPlayer,
     updatePlayer,
     deletePlayer,
@@ -380,3 +396,4 @@ export function useLeagueData() {
     deleteMatch,
   };
 }
+

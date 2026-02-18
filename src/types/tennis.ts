@@ -1,13 +1,22 @@
+export interface League {
+  id: string;
+  name: string;
+  passcode: string;
+  createdAt: string;
+  createdBy?: string | null; // Reserved for future Supabase Auth integration
+}
+
 export interface Player {
   id: string;
   name: string;
+  leagueId: string;
   createdAt: string;
 }
 
 export interface Season {
   id: string;
   name: string;
-  passcode: string;
+  leagueId: string;
   createdAt: string;
 }
 
@@ -28,6 +37,7 @@ export interface Match {
   gamesB: number;
   createdAt: string;
   seasonId: string;
+  leagueId: string;
   surface?: Surface;
 }
 
