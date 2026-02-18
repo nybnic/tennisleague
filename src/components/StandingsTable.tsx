@@ -26,21 +26,21 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <Table>
+    <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 rounded-lg border border-border">
+      <Table className="text-xs md:text-sm">
         <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead className="font-display">#</TableHead>
-            <TableHead className="font-display">Player</TableHead>
-            <TableHead className="font-display text-center">M</TableHead>
-            <TableHead className="font-display text-center">W</TableHead>
-            <TableHead className="font-display text-center">D</TableHead>
-            <TableHead className="font-display text-center">L</TableHead>
-            <TableHead className="font-display text-center">W%</TableHead>
-            <TableHead className="font-display text-center">GF</TableHead>
-            <TableHead className="font-display text-center">GA</TableHead>
-            <TableHead className="font-display text-center">G%</TableHead>
-            <TableHead className="font-display text-center">Elo</TableHead>
+          <TableRow className="bg-muted/50 sticky top-0">
+            <TableHead className="font-display sticky left-0 z-20 bg-muted/50 p-2 md:p-3 min-w-[40px] text-center">#</TableHead>
+            <TableHead className="font-display sticky left-[52px] md:left-[60px] z-20 bg-muted/50 p-2 md:p-3 min-w-[120px] text-left">Player</TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[45px]"><span className="hidden sm:inline">Matches</span><span className="sm:hidden">M</span></TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[40px]">W</TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[40px]">D</TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[40px]">L</TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[50px]">W%</TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[45px]"><span className="hidden sm:inline">GF</span><span className="sm:hidden">F</span></TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[45px]"><span className="hidden sm:inline">GA</span><span className="sm:hidden">A</span></TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[50px]">G%</TableHead>
+            <TableHead className="font-display text-center p-2 md:p-3 min-w-[55px]">Elo</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -50,13 +50,13 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
             const isOpen = openPlayer === s.playerId;
             return (
               <TableRow key={s.playerId} className={i === 0 && s.matches > 0 ? 'bg-primary/5' : ''}>
-                <TableCell className="font-bold text-muted-foreground">{i + 1}</TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="font-bold text-muted-foreground sticky left-0 z-10 bg-inherit p-2 md:p-3 text-center text-xs md:text-sm">{i + 1}</TableCell>
+                <TableCell className="font-medium sticky left-[52px] md:left-[60px] z-10 bg-inherit p-2 md:p-3 truncate text-xs md:text-sm">
                   {tip && s.matches > 0 ? (
                     <Popover open={isOpen} onOpenChange={(open) => setOpenPlayer(open ? s.playerId : null)}>
                       <PopoverTrigger asChild>
                         <button
-                          className="cursor-pointer underline decoration-dotted underline-offset-2 decoration-muted-foreground/40 hover:text-foreground/80 text-left"
+                          className="cursor-pointer underline decoration-dotted underline-offset-2 decoration-muted-foreground/40 hover:text-foreground/80 text-left truncate"
                         >
                           {s.playerName}
                         </button>
@@ -73,29 +73,29 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
                       </PopoverContent>
                     </Popover>
                   ) : (
-                    s.playerName
+                    <span className="truncate">{s.playerName}</span>
                   )}
                 </TableCell>
-                  <TableCell className="text-center tabular-nums">{s.matches}</TableCell>
-                  <TableCell className="text-center tabular-nums font-semibold">{s.matchesWon}</TableCell>
-                  <TableCell className="text-center tabular-nums">{s.matchesDrawn}</TableCell>
-                  <TableCell className="text-center tabular-nums">{s.matchesLost}</TableCell>
-                  <TableCell className="text-center tabular-nums">
-                    {s.matchesWonPct.toFixed(0)}%
-                  </TableCell>
-                  <TableCell className="text-center tabular-nums">{s.gamesFor}</TableCell>
-                  <TableCell className="text-center tabular-nums">{s.gamesAgainst}</TableCell>
-                  <TableCell className="text-center tabular-nums">
-                    {s.gamesWonPct.toFixed(0)}%
-                  </TableCell>
-                  <TableCell className="text-center tabular-nums font-bold">
-                    {s.elo}{t && <TrendIcon direction={t.eloTrend} />}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-    );
+                <TableCell className="text-center tabular-nums p-2 md:p-3 text-xs md:text-sm">{s.matches}</TableCell>
+                <TableCell className="text-center tabular-nums font-semibold p-2 md:p-3 text-xs md:text-sm">{s.matchesWon}</TableCell>
+                <TableCell className="text-center tabular-nums p-2 md:p-3 text-xs md:text-sm">{s.matchesDrawn}</TableCell>
+                <TableCell className="text-center tabular-nums p-2 md:p-3 text-xs md:text-sm">{s.matchesLost}</TableCell>
+                <TableCell className="text-center tabular-nums p-2 md:p-3 text-xs md:text-sm">
+                  {s.matchesWonPct.toFixed(0)}%
+                </TableCell>
+                <TableCell className="text-center tabular-nums p-2 md:p-3 text-xs md:text-sm">{s.gamesFor}</TableCell>
+                <TableCell className="text-center tabular-nums p-2 md:p-3 text-xs md:text-sm">{s.gamesAgainst}</TableCell>
+                <TableCell className="text-center tabular-nums p-2 md:p-3 text-xs md:text-sm">
+                  {s.gamesWonPct.toFixed(0)}%
+                </TableCell>
+                <TableCell className="text-center tabular-nums font-bold p-2 md:p-3 text-xs md:text-sm">
+                  {s.elo}{t && <TrendIcon direction={t.eloTrend} />}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
   }
