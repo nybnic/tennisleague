@@ -48,10 +48,11 @@ export function StandingsTable({ standings, trends, tooltips }: Props) {
             const t = trends?.[s.playerId];
             const tip = tooltips?.[s.playerId];
             const isOpen = openPlayer === s.playerId;
+            const isFirstPlace = i === 0 && s.matches > 0;
             return (
-              <TableRow key={s.playerId} className={i === 0 && s.matches > 0 ? 'bg-primary/5' : ''}>
-                <TableCell className="font-bold text-muted-foreground sticky left-0 z-10 p-2 md:p-3 text-center text-xs md:text-sm min-w-[35px]" style={{ backgroundColor: i === 0 && s.matches > 0 ? 'hsl(var(--primary) / 0.05)' : 'transparent' }}>{i + 1}</TableCell>
-                <TableCell className="font-medium sticky left-[51px] md:left-[59px] z-10 p-2 md:p-3 truncate text-xs md:text-sm min-w-[100px]" style={{ backgroundColor: i === 0 && s.matches > 0 ? 'hsl(var(--primary) / 0.05)' : 'transparent' }}>
+              <TableRow key={s.playerId} className={isFirstPlace ? 'bg-primary/5' : ''}>
+                <TableCell className={`font-bold text-muted-foreground sticky left-0 z-10 p-2 md:p-3 text-center text-xs md:text-sm min-w-[35px] ${isFirstPlace ? 'bg-primary/5' : 'bg-background'}`}>{i + 1}</TableCell>
+                <TableCell className={`font-medium sticky left-[51px] md:left-[59px] z-10 p-2 md:p-3 truncate text-xs md:text-sm min-w-[100px] ${isFirstPlace ? 'bg-primary/5' : 'bg-background'}`}>
                   {tip && s.matches > 0 ? (
                     <Popover open={isOpen} onOpenChange={(open) => setOpenPlayer(open ? s.playerId : null)}>
                       <PopoverTrigger asChild>
