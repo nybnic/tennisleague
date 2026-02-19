@@ -18,4 +18,7 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    'process.env.VITE_AUTH_SYSTEM': JSON.stringify(process.env.VITE_AUTH_SYSTEM || 'passcode'),
+  },
 }));
