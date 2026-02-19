@@ -169,7 +169,7 @@ export default function StandingsPage() {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2">
                   <div className="rounded-lg border border-border bg-card p-3">
-                    <HeadToHeadMatrix players={players} h2h={h2h} playerIndexMap={playerIndexMap} />
+                    <HeadToHeadMatrix players={players} h2h={h2h} playerIndexMap={playerIndexMap} matches={filteredMatches} />
                   </div>
                 </CollapsibleContent>
               </section>
