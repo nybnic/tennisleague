@@ -14,10 +14,12 @@ interface UserContextType {
   userProfile: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  authError: string | null;
   signUpWithEmail: (email: string, pseudonym: string) => Promise<void>;
   signInWithEmail: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   verifyOtp: (email: string, token: string) => Promise<void>;
+  clearAuthError: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -26,6 +28,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -40,14 +43,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        const sessionPromise = supabaseAuth.auth.getSession();
-        
-        // Set a 5 second timeout for session check
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Session check timeout")), 5000)
-        );
-        
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        // Don't use a timeout - just get the session directly
+        // Supabase will return immediately or the magic link will be processed by onAuthStateChange
+        const { data: { session } } = await supabaseAuth.auth.getSession();
         
         if (session?.user) {
           console.log("[UserContext] Found existing session for user:", session.user.id);
@@ -73,8 +71,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           console.log("[UserContext] No existing session found");
         }
       } catch (error) {
-        console.error('[UserContext] Error checking auth:', error);
-        // Don't block the UI on auth check errors
+        console.error('[UserContext] Error checking auth:', error instanceof Error ? error.message : error);
+        // Don't block the UI on auth check errors - just continue
       } finally {
         setIsLoading(false);
       }
@@ -89,11 +87,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUser(session.user);
         
         // Try to fetch existing profile
-        const { data: existingProfile } = await supabaseAuth
+        const { data: existingProfile, error: fetchError } = await supabaseAuth
           .from('users')
           .select('*')
           .eq('id', session.user.id)
           .single();
+        
+        console.log("[UserContext] Profile fetch result:", { exists: !!existingProfile, error: fetchError?.message });
         
         if (existingProfile) {
           // Profile exists, use it
@@ -109,28 +109,55 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           const pseudonym = sessionStorage.getItem('pendingPseudonym') || session.user.user_metadata?.pseudonym || session.user.email?.split('@')[0] || 'User';
           
           console.log("[UserContext] Creating profile for new user with pseudonym:", pseudonym);
-          const { data: newProfile, error: profileError } = await supabaseAuth
-            .from('users')
-            .insert([{
-              id: session.user.id,
-              email: session.user.email,
-              pseudonym,
-            }])
-            .select()
-            .single();
-          
-          if (profileError) {
-            console.error("[UserContext] Error creating profile:", profileError);
-          } else if (newProfile) {
-            setUserProfile({
-              id: newProfile.id,
-              email: newProfile.email,
-              pseudonym: newProfile.pseudonym,
-              createdAt: newProfile.created_at,
-            });
+          try {
+            const { data: newProfile, error: profileError } = await supabaseAuth
+              .from('users')
+              .insert([{
+                id: session.user.id,
+                email: session.user.email,
+                pseudonym,
+              }])
+              .select()
+              .single();
+            
+            if (profileError) {
+              const errorMsg = profileError.message || JSON.stringify(profileError);
+              console.error("[UserContext] CRITICAL: Failed to create profile:", errorMsg);
+              console.error("[UserContext] This is likely an RLS policy issue. Check the diagnostics page.");
+              setAuthError(`Profile creation failed: ${errorMsg}`);
+              return;
+            } else if (newProfile) {
+              console.log("[UserContext] ✓ Profile created successfully:", newProfile.id);
+              setAuthError(null);
+              setUserProfile({
+                id: newProfile.id,
+                email: newProfile.email,
+                pseudonym: newProfile.pseudonym,
+                createdAt: newProfile.created_at,
+              });
+            } else {
+              const err = "Profile insert returned no data";
+              console.error("[UserContext] CRITICAL:", err);
+              setAuthError(err);
+              return;
+            }
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            console.error("[UserContext] CRITICAL: Profile creation exception:", errorMsg);
+            setAuthError(`Profile creation error: ${errorMsg}`);
+            return;
           }
           
           sessionStorage.removeItem('pendingPseudonym');
+        } else {
+          // User is authenticated but this wasn't a sign-in event and no profile found
+          console.log("[UserContext] User authenticated but no profile found (not SIGNED_IN event)");
+          setUserProfile({
+            id: session.user.id,
+            email: session.user.email || '',
+            pseudonym: 'User',
+            createdAt: new Date().toISOString(),
+          });
         }
       } else {
         console.log("[UserContext] User signed out");
@@ -225,16 +252,43 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      const { error } = await supabaseAuth.auth.signOut();
-      if (error) throw error;
+      console.log('[UserContext] Starting sign out...');
+      
+      // Wrap signOut with a 3-second timeout to prevent hanging
+      const signOutPromise = supabaseAuth.auth.signOut();
+      const timeoutPromise = new Promise<{ error: Error }>((resolve) => {
+        setTimeout(() => {
+          console.log('[UserContext] Sign out timed out after 3 seconds, clearing state anyway');
+          resolve({ error: new Error('Sign out timeout') });
+        }, 3000);
+      });
+      
+      const { error } = await Promise.race([signOutPromise, timeoutPromise]);
+      
+      console.log('[UserContext] Sign out API response:', { error });
+      
+      // Clear local state regardless of error (session might already be cleared server-side)
       setUser(null);
       setUserProfile(null);
+      
+      if (error && error.message !== 'Sign out timeout') {
+        console.warn('[UserContext] Sign out API returned error (clearing state anyway):', error);
+      } else {
+        console.log('[UserContext] Sign out complete');
+      }
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('[UserContext] Sign out exception:', error);
+      // Clear local state on exception too
+      setUser(null);
+      setUserProfile(null);
       throw error;
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const clearAuthError = () => {
+    setAuthError(null);
   };
 
   return (
@@ -244,10 +298,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         userProfile,
         isLoading,
         isAuthenticated: !!user,
+        authError,
         signUpWithEmail,
         signInWithEmail,
         verifyOtp,
         signOut,
+        clearAuthError,
       }}
     >
       {children}
